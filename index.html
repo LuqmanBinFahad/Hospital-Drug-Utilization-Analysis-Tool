@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Drug Utilization Analysis Tool</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #1e40af;
+            --secondary: #3b82f6;
+            --accent: #60a5fa;
+            --light: #dbeafe;
+            --dark: #1e3a8a;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f8fafc;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--dark));
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .phase-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin: 2rem 0;
+            overflow: hidden;
+        }
+        
+        .phase-header {
+            background: var(--primary);
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .phase-number {
+            background: var(--accent);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-right: 1rem;
+        }
+        
+        .phase-content {
+            padding: 2rem;
+        }
+        
+        h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+        
+        h3 {
+            color: var(--dark);
+            margin: 1.5rem 0 1rem;
+            font-size: 1.4rem;
+        }
+        
+        ul {
+            padding-left: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .highlight {
+            background-color: var(--light);
+            border-left: 4px solid var(--secondary);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 2rem 0;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .chart-title {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            font-weight: 600;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .data-table th {
+            background: var(--primary);
+            color: white;
+            text-align: left;
+            padding: 1rem;
+        }
+        
+        .data-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .data-table tr:hover {
+            background-color: var(--light);
+        }
+        
+        .abc-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .badge-a {
+            background-color: var(--danger);
+            color: white;
+        }
+        
+        .badge-b {
+            background-color: var(--warning);
+            color: white;
+        }
+        
+        .badge-c {
+            background-color: var(--success);
+            color: white;
+        }
+        
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 2rem 0;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+        
+        .card-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        
+        .card-a { color: var(--danger); }
+        .card-b { color: var(--warning); }
+        .card-c { color: var(--success); }
+        .card-total { color: var(--primary); }
+        
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Hospital Drug Utilization Analysis Tool</h1>
+            <p class="subtitle">A Comprehensive Framework for Pharmaceutical Cost Management</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="phase-container">
+            <div class="phase-header">
+                <div class="phase-number">1</div>
+                <h2>Data Collection & Preparation</h2>
+            </div>
+            <div class="phase-content">
+                <h3>Required Data Points</h3>
+                <p>To perform a comprehensive drug utilization analysis, the following data elements must be collected from hospital systems:</p>
+                
+                <ul>
+                    <li><strong>Drug Identification:</strong> Generic name, brand name, National Drug Code (NDC), and Anatomical Therapeutic Chemical (ATC) classification code</li>
+                    <li><strong>Transaction Data:</strong> Date of dispensing, quantity dispensed, unit of measure, and department/service line</li>
+                    <li><strong>Financial Data:</strong> Unit cost, total cost, reimbursement rates, and payment sources (insurance, patient pay, government programs)</li>
+                    <li><strong>Patient Information:</strong> Patient age group, diagnosis codes (ICD-10), and length of stay (for inpatient medications)</li>
+                    <li><strong>Prescriber Data:</strong> Prescribing physician specialty and department</li>
+                </ul>
+                
+                <div class="highlight">
+                    <p><strong>Why ATC Classification is Critical:</strong> The ATC system provides a standardized hierarchical classification of drugs based on the organ or system on which they act and their therapeutic, pharmacological, and chemical properties. This enables consistent grouping of medications across different databases and facilitates meaningful comparisons of drug utilization patterns.</p>
+                </div>
+                
+                <h3>Data Preparation Process</h3>
+                <ul>
+                    <li>Clean and standardize drug names to eliminate duplicates and variations in naming conventions</li>
+                    <li>Map all medications to their corresponding ATC codes using the latest WHO classification system</li>
+                    <li>Aggregate transaction data to calculate total quantities and costs for each drug</li>
+                    <li>Validate data integrity by checking for outliers, missing values, and inconsistencies</li>
+                    <li>Create summary datasets grouped by ATC level 1 (anatomical main group) through level 5 (chemical substance)</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="phase-container">
+            <div class="phase-header">
+                <div class="phase-number">2</div>
+                <h2>Analysis & Calculation</h2>
+            </div>
+            <div class="phase-content">
+                <h3>Drug Class Cost Calculation</h3>
+                <p>For each ATC drug class, calculate the following metrics:</p>
+                <ul>
+                    <li><strong>Total Cost:</strong> Sum of (unit cost × quantity dispensed) for all drugs within the class</li>
+                    <li><strong>Cost Percentage:</strong> (Class total cost / Overall pharmaceutical expenditure) × 100</li>
+                    <li><strong>Average Unit Cost:</strong> Total cost divided by total quantity dispensed</li>
+                    <li><strong>Utilization Volume:</strong> Total quantity of drug units dispensed</li>
+                </ul>
+                
+                <h3>ABC Analysis Methodology</h3>
+                <p>Perform Pareto analysis to categorize drug classes based on their contribution to total pharmaceutical expenditure:</p>
+                
+                <ul>
+                    <li><strong>Class A (High Impact):</strong> Top 20% of drug classes contributing to approximately 80% of total costs. These require intensive management and monitoring.</li>
+                    <li><strong>Class B (Medium Impact):</strong> Next 30% of drug classes contributing to about 15% of total costs. These require moderate oversight.</li>
+                    <li><strong>Class C (Low Impact):</strong> Remaining 50% of drug classes contributing to approximately 5% of total costs. These require routine monitoring.</li>
+                </ul>
+                
+                <div class="highlight">
+                    <p><strong>Strategic Importance:</strong> ABC classification enables hospitals to prioritize pharmaceutical management efforts. Class A drugs should be subject to formulary restrictions, prior authorization requirements, and regular clinical review. Class B drugs may benefit from therapeutic substitution programs. Class C drugs can be managed through standard procurement processes.</p>
+                </div>
+                
+                <h3>Utilization Pattern Analysis</h3>
+                <p>Differentiate between cost drivers using a quadrant analysis:</p>
+                <ul>
+                    <li><strong>High-Cost, Low-Volume:</strong> Specialty medications, biologics, and orphan drugs with high unit costs but limited patient populations</li>
+                    <li><strong>Low-Cost, High-Volume:</strong> Common generics like antibiotics, analgesics, and cardiovascular medications with modest unit costs but high dispensing frequency</li>
+                    <li><strong>High-Cost, High-Volume:</strong> Critical care medications and newer branded drugs with both high unit costs and frequent use</li>
+                    <li><strong>Low-Cost, Low-Volume:</strong> Niche medications with limited clinical application</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="phase-container">
+            <div class="phase-header">
+                <div class="phase-number">3</div>
+                <h2>Reporting & Visualization</h2>
+            </div>
+            <div class="phase-content">
+                <h3>Key Reports</h3>
+                <ol>
+                    <li><strong>Ranked Drug Class Expenditure Report:</strong> Sorted list of ATC classes by total cost, including percentage contribution to overall pharmaceutical budget</li>
+                    <li><strong>ABC Classification Summary:</strong> Breakdown of drug classes by ABC category with associated costs, volumes, and management recommendations</li>
+                    <li><strong>Utilization Pattern Analysis:</strong> Quadrant analysis showing relationship between unit cost and dispensing volume for major drug categories</li>
+                    <li><strong>Trend Analysis Report:</strong> Monthly or quarterly cost trends for Class A drug categories to identify seasonal variations or emerging cost drivers</li>
+                </ol>
+                
+                <h3>Data Visualizations</h3>
+                <div class="dashboard">
+                    <div class="chart-container">
+                        <div class="chart-title">Drug Class Cost Distribution</div>
+                        <canvas id="costDistributionChart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <div class="chart-title">ABC Analysis of Pharmaceutical Expenditure</div>
+                        <canvas id="abcAnalysisChart"></canvas>
+                    </div>
+                </div>
+                
+                <h3>Sample Analysis Results</h3>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ATC Class</th>
+                            <th>Description</th>
+                            <th>Total Cost ($)</th>
+                            <th>% of Total</th>
+                            <th>ABC Class</th>
+                            <th>Utilization Pattern</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>L01</td>
+                            <td>Antineoplastic agents</td>
+                            <td>2,850,000</td>
+                            <td>28.5%</td>
+                            <td><span class="abc-badge badge-a">A</span></td>
+                            <td>High-Cost, Low-Volume</td>
+                        </tr>
+                        <tr>
+                            <td>B05</td>
+                            <td>Blood substitutes and perfusion solutions</td>
+                            <td>1,980,000</td>
+                            <td>19.8%</td>
+                            <td><span class="abc-badge badge-a">A</span></td>
+                            <td>High-Cost, High-Volume</td>
+                        </tr>
+                        <tr>
+                            <td>C01</td>
+                            <td>Cardiac therapy</td>
+                            <td>1,250,000</td>
+                            <td>12.5%</td>
+                            <td><span class="abc-badge badge-a">A</span></td>
+                            <td>Low-Cost, High-Volume</td>
+                        </tr>
+                        <tr>
+                            <td>A02</td>
+                            <td>Drugs for acid related disorders</td>
+                            <td>890,000</td>
+                            <td>8.9%</td>
+                            <td><span class="abc-badge badge-b">B</span></td>
+                            <td>Low-Cost, High-Volume</td>
+                        </tr>
+                        <tr>
+                            <td>J01</td>
+                            <td>Antibacterials for systemic use</td>
+                            <td>720,000</td>
+                            <td>7.2%</td>
+                            <td><span class="abc-badge badge-b">B</span></td>
+                            <td>Low-Cost, High-Volume</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="summary-cards">
+                    <div class="card">
+                        <h4>Total Pharmaceutical Expenditure</h4>
+                        <div class="card-value card-total">$10,000,000</div>
+                        <p>Annual Hospital Drug Budget</p>
+                    </div>
+                    <div class="card">
+                        <h4>Class A Drugs</h4>
+                        <div class="card-value card-a">42.3%</div>
+                        <p>of total pharmaceutical costs</p>
+                    </div>
+                    <div class="card">
+                        <h4>Class B Drugs</h4>
+                        <div class="card-value card-b">28.9%</div>
+                        <p>of total pharmaceutical costs</p>
+                    </div>
+                    <div class="card">
+                        <h4>Class C Drugs</h4>
+                        <div class="card-value card-c">28.8%</div>
+                        <p>of total pharmaceutical costs</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Hospital Drug Utilization Analysis Tool | Designed for Healthcare Cost Management</p>
+            <p>This framework enables data-driven pharmaceutical decision making through systematic analysis of drug utilization patterns and cost drivers.</p>
+        </div>
+    </div>
+
+    <script>
+        // Sample data for visualization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Cost Distribution Chart
+            const costCtx = document.getElementById('costDistributionChart').getContext('2d');
+            const costChart = new Chart(costCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Antineoplastic Agents (L01)', 'Blood Substitutes (B05)', 'Cardiac Therapy (C01)', 'Acid Disorders (A02)', 'Antibacterials (J01)', 'Other Classes'],
+                    datasets: [{
+                        data: [28.5, 19.8, 12.5, 8.9, 7.2, 23.1],
+                        backgroundColor: [
+                            '#ef4444',
+                            '#f97316',
+                            '#eab308',
+                            '#84cc16',
+                            '#06b6d4',
+                            '#8b5cf6'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.parsed}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // ABC Analysis Chart
+            const abcCtx = document.getElementById('abcAnalysisChart').getContext('2d');
+            const abcChart = new Chart(abcCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Class A', 'Class B', 'Class C'],
+                    datasets: [{
+                        label: 'Percentage of Total Costs',
+                        data: [42.3, 28.9, 28.8],
+                        backgroundColor: [
+                            '#ef4444',
+                            '#f59e0b',
+                            '#10b981'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Percentage of Total Pharmaceutical Costs'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.parsed.y}%`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
